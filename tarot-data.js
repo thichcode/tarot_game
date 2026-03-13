@@ -547,5 +547,23 @@ const AI_PROVIDERS = {
         maxOutputTokens: 2000
       }
     })
+  },
+  google25Flash: {
+    id: 'google25Flash',
+    name: '🎯 Google Gemini 2.5 Flash',
+    description: 'Mới nhất - Cần API Key',
+    needsKey: true,
+    endpoint: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-native-audio-preview-12-2025:generateContent',
+    keyParam: 'key',
+    headers: (key) => ({
+      'Content-Type': 'application/json'
+    }),
+    body: (prompt) => ({
+      contents: [{ parts: [{ text: prompt }] }],
+      generationConfig: {
+        temperature: 0.7,
+        maxOutputTokens: 2000
+      }
+    })
   }
 };

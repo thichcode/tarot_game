@@ -167,6 +167,8 @@ class TarotApp {
         analyzeBtn.textContent = '🌟 Phân Tích với Gemini Pro 2.0';
       } else if (this.aiProvider === 'google15Pro') {
         analyzeBtn.textContent = '✨ Phân Tích với Gemini 1.5 Pro';
+      } else if (this.aiProvider === 'google25Flash') {
+        analyzeBtn.textContent = '🎯 Phân Tích với Gemini 2.5 Flash';
       } else {
         analyzeBtn.textContent = '🤖 Phân Tích AI (Local)';
       }
@@ -422,11 +424,13 @@ class TarotApp {
     const aiModeText = this.aiProvider === 'openai' ? 'OpenAI' : 
                        this.aiProvider === 'google' ? 'Google Gemini Flash' : 
                        this.aiProvider === 'googlePro' ? 'Google Gemini Pro 2.0' :
-                       this.aiProvider === 'google15Pro' ? 'Google Gemini 1.5 Pro' : 'Local';
+                       this.aiProvider === 'google15Pro' ? 'Google Gemini 1.5 Pro' :
+                       this.aiProvider === 'google25Flash' ? 'Google Gemini 2.5 Flash' : 'Local';
     const aiEmoji = this.aiProvider === 'openai' ? '🤖' : 
                     this.aiProvider === 'google' ? '🌐' :
                     this.aiProvider === 'googlePro' ? '🌟' :
-                    this.aiProvider === 'google15Pro' ? '✨' : '🔮';
+                    this.aiProvider === 'google15Pro' ? '✨' :
+                    this.aiProvider === 'google25Flash' ? '🎯' : '🔮';
     
     analyzeBtn.disabled = true;
     analyzeBtn.textContent = `${aiEmoji} Đang phân tích với ${aiModeText}...`;
@@ -438,7 +442,7 @@ class TarotApp {
       
       if (this.aiProvider === 'local') {
         result = this.getLocalAnalysis();
-      } else if (this.aiProvider === 'openai' || this.aiProvider === 'google' || this.aiProvider === 'googlePro' || this.aiProvider === 'google15Pro') {
+      } else if (['openai', 'google', 'googlePro', 'google15Pro', 'google25Flash'].includes(this.aiProvider)) {
         result = await this.getAIAnalysis();
       } else {
         result = this.getLocalAnalysis();
