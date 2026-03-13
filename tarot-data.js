@@ -499,7 +499,7 @@ const AI_PROVIDERS = {
     name: '🌐 Google Gemini',
     description: 'Phân tích sâu - Cần API Key',
     needsKey: true,
-    endpoint: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent',
+    endpoint: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent',
     keyParam: 'key',
     headers: (key) => ({
       'Content-Type': 'application/json'
