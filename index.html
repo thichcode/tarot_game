@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🔮 Tarot - Bói Bài</title>
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="background-pattern"></div>
+  
+  <div class="container">
+    <!-- Header -->
+    <header class="header">
+      <h1 class="title">🔮 Tarot</h1>
+      <p class="subtitle">Khám phá vận mệnh của bạn</p>
+    </header>
+
+    <!-- Welcome Screen -->
+    <div id="welcome-screen" class="screen active">
+      <div class="welcome-content">
+        <div class="tarot-icon">✦</div>
+        <p class="welcome-text">
+          Hãy thư giãn, tập trung vào câu hỏi trong tâm trí.<br>
+          Sau đó, hãy để con tim dẫn lối chọn 3 lá bài.
+        </p>
+        <button id="start-btn" class="btn btn-primary">Bắt Đầu</button>
+        <button id="settings-btn" class="btn btn-secondary">⚙️ Cài Đặt AI</button>
+      </div>
+    </div>
+
+    <!-- Question Screen -->
+    <div id="question-screen" class="screen">
+      <div class="question-content">
+        <h2>Câu Hỏi Của Bạn</h2>
+        <p class="hint">Hãy nghĩ về điều bạn muốn biết...</p>
+        <textarea id="question-input" placeholder="Ví dụ: Tình yêu của tôi sẽ như thế nào?&#10;Công việc sắp tới có thuận lợi không?&#10;..."></textarea>
+        <button id="shuffle-btn" class="btn btn-primary">Xáo Bài & Chọn</button>
+      </div>
+    </div>
+
+    <!-- Cards Screen -->
+    <div id="cards-screen" class="screen">
+      <div class="cards-header">
+        <h2>Hãy Chọn 3 Lá Bài</h2>
+        <p class="hint">Click vào lá bài để chọn</p>
+        <div class="selection-counter">
+          <span id="selected-count">0</span> / 3
+        </div>
+      </div>
+      
+      <div id="deck-container" class="deck-container">
+        <div id="deck" class="deck"></div>
+      </div>
+
+      <div class="cards-actions">
+        <button id="read-btn" class="btn btn-primary" disabled>Xem Kết Quả</button>
+        <button id="reset-btn" class="btn btn-secondary">Chọn Lại</button>
+      </div>
+    </div>
+
+    <!-- Result Screen -->
+    <div id="result-screen" class="screen">
+      <div class="result-header">
+        <h2>Kết Quả</h2>
+        <p id="result-question" class="result-question"></p>
+      </div>
+
+      <div id="selected-cards" class="selected-cards"></div>
+
+      <div class="ai-section">
+        <button id="analyze-btn" class="btn btn-ai">🤖 Phân Tích AI</button>
+        <div id="ai-loading" class="ai-loading hidden">
+          <div class="spinner"></div>
+          <p>Đang phân tích...</p>
+        </div>
+        <div id="ai-result" class="ai-result hidden"></div>
+      </div>
+
+      <div class="result-actions">
+        <button id="new-reading-btn" class="btn btn-primary">Bói Lại</button>
+        <button id="back-to-cards-btn" class="btn btn-secondary"> Quay Lại</button>
+      </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="modal hidden">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>⚙️ Cài Đặt AI</h2>
+          <button id="close-settings" class="close-btn">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label>Chọn nhà cung cấp AI:</label>
+            <select id="ai-provider">
+              <option value="local">🔮 Local (Miễn phí)</option>
+              <option value="openai">🤖 OpenAI (GPT-4o Mini)</option>
+              <option value="google">🌐 Google Gemini 2.0 Flash</option>
+            </select>
+          </div>
+          
+          <div id="api-key-group" class="form-group hidden">
+            <label for="api-key">API Key:</label>
+            <input type="password" id="api-key" placeholder="Nhập API key của bạn">
+            <p class="help-text">
+              <a href="https://platform.openai.com/api-keys" target="_blank">Lấy OpenAI Key</a> | 
+              <a href="https://aistudio.google.com/app/apikey" target="_blank">Lấy Gemini Key</a>
+            </p>
+          </div>
+
+          <div class="current-settings">
+            <h3>Cài đặt hiện tại:</h3>
+            <p id="current-provider">Provider: Local (Miễn phí)</p>
+            <button id="clear-api-key" class="btn btn-small hidden">Xóa API Key</button>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button id="save-settings" class="btn btn-primary">Lưu</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="tarot-data.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
