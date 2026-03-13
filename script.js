@@ -530,7 +530,10 @@ class TarotApp {
   async getAIAnalysis() {
     const provider = AI_PROVIDERS[this.aiProvider];
     
-    if (!provider.needsKey || !this.apiKey) {
+    // If no client-side key, use secure serverless proxy on Vercel (/api/analyze)
+    const hasClientKey = !!this.apiKey;
+    const canUseProxy = ['openai', 'google', 'openrouter'].includes(this.aiProvider);
+    if (provider.needsKey && !hasClientKey && !canUseProxy) {
       throw new Error('Vui lòng nhập API Key trong cài đặt');
     }
     
@@ -538,6 +541,27 @@ class TarotApp {
       this.selectedCards.map(c => c.name),
       this.question
     );
+
+    if (provider.needsKey && !hasClientKey && canUseProxy) {
+      const model = this.aiProvider === 'openrouter'
+        ? (localStorage.getItem(STORAGE_KEYS.openRouterModel) || AI_PROVIDERS.openrouter.model)
+        : undefined;
+
+      const proxyResp = await fetch('/api/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ provider: this.aiProvider, prompt, model })
+      });
+
+      const data = await proxyResp.json().catch(() => ({}));
+      if (!proxyResp.ok) {
+        throw new Error(data?.error?.message || 'Proxy API Error');
+      }
+      if (!data?.text) {
+        throw new Error('Proxy trả về dữ liệu trống');
+      }
+      return data.text;
+    }
     
     let response;
     
@@ -641,27 +665,15 @@ class TarotApp {
         aiModelSelect.appendChild(opt);
       }
 
-      const headers = { 'Content-Type': 'application/json' };
-      // Some OpenRouter setups allow unauthenticated /models, but attach key if present.
-      const key = localStorage.getItem(STORAGE_KEYS.apiKey) || '';
-      if (key) headers['Authorization'] = `Bearer ${key}`;
-
-      const resp = await fetch('https://openrouter.ai/api/v1/models', { headers });
+      // Use serverless proxy so the browser does not need any key.
+      const resp = await fetch('/api/openrouter-models');
       if (!resp.ok) {
         // Don't throw hard; just keep dropdown usable.
         console.warn('OpenRouter models fetch failed:', resp.status, await resp.text());
         return;
       }
       const data = await resp.json();
-      const models = Array.isArray(data?.data) ? data.data : [];
-
-      // Heuristic: free models often have ":free" suffix.
-      // Another heuristic: prompt/completion price == 0.
-      const freeModels = models
-        .map(m => m?.id)
-        .filter(Boolean)
-        .filter(id => id.endsWith(':free'))
-        .sort((a, b) => a.localeCompare(b));
+      const freeModels = Array.isArray(data?.models) ? data.models : [];
 
       this.openRouterFreeModels = freeModels;
       this.populateOpenRouterModelSelect(freeModels);
