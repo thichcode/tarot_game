@@ -79,54 +79,11 @@ class TarotApp {
   // Settings Management
   // ========================================
   
-  async loadSettings() {
-    // Thử đọc từ API endpoint trước
-    try {
-      const response = await fetch('/api/config');
-      if (response.ok) {
-        const config = await response.json();
-        window.ENV_OPENAI_API_KEY = config.openaiApiKey || '';
-        window.ENV_GEMINI_API_KEY = config.geminiApiKey || '';
-        console.log('✅ Loaded config from API');
-      }
-    } catch (e) {
-      console.log('⚠️ Config API not available, trying env vars');
-    }
+  loadSettings() {
+    this.aiProvider = localStorage.getItem(STORAGE_KEYS.provider) || 'local';
+    this.apiKey = localStorage.getItem(STORAGE_KEYS.apiKey) || '';
     
-    // Fallback: đọc từ inline vars
-    const envOpenAIKey = window.ENV_OPENAI_API_KEY || '';
-    const envGoogleKey = window.ENV_GEMINI_API_KEY || '';
-    
-    // Debug
-    console.log('🔑 Available Env Keys:', {
-      ENV_OPENAI: !!window.ENV_OPENAI_API_KEY,
-      ENV_GEMINI: !!window.ENV_GEMINI_API_KEY,
-      savedProvider: localStorage.getItem(STORAGE_KEYS.provider),
-      hasApiKey: !!localStorage.getItem(STORAGE_KEYS.apiKey)
-    });
-    
-    // Nếu có biến môi trường thì dùng, không thì dùng localStorage
-    const savedProvider = localStorage.getItem(STORAGE_KEYS.provider) || 'local';
-    const savedApiKey = localStorage.getItem(STORAGE_KEYS.apiKey) || '';
-    
-    // Ưu tiên dùng key từ env nếu có
-    if (envGoogleKey) {
-      this.aiProvider = 'google';
-      this.apiKey = envGoogleKey;
-      console.log('✅ Using Gemini from env');
-    } else if (envOpenAIKey) {
-      this.aiProvider = 'openai';
-      this.apiKey = envOpenAIKey;
-      console.log('✅ Using OpenAI from env');
-    } else if (savedProvider !== 'local' && savedApiKey) {
-      this.aiProvider = savedProvider;
-      this.apiKey = savedApiKey;
-    } else {
-      this.aiProvider = savedProvider;
-      this.apiKey = savedApiKey;
-    }
-    
-    console.log('📌 Final provider:', this.aiProvider, '| Has API key:', !!this.apiKey);
+    console.log('📌 Loaded settings - Provider:', this.aiProvider, '| Has API key:', !!this.apiKey);
   }
 
   updateSettingsUI() {
