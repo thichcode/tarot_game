@@ -118,6 +118,7 @@ class TarotApp {
     const currentProvider = document.getElementById('current-provider');
     const clearBtn = document.getElementById('clear-api-key');
     const apiKeyInput = document.getElementById('api-key');
+    const analyzeBtn = document.getElementById('analyze-btn');
     
     providerSelect.value = this.aiProvider;
     
@@ -137,6 +138,17 @@ class TarotApp {
     } else {
       clearBtn.classList.add('hidden');
       apiKeyInput.value = '';
+    }
+    
+    // Update analyze button to show which AI is being used
+    if (analyzeBtn) {
+      if (this.aiProvider === 'openai') {
+        analyzeBtn.textContent = '🤖 Phân Tích với OpenAI';
+      } else if (this.aiProvider === 'google') {
+        analyzeBtn.textContent = '🌐 Phân Tích với Gemini';
+      } else {
+        analyzeBtn.textContent = '🤖 Phân Tích AI (Local)';
+      }
     }
   }
 
@@ -385,8 +397,14 @@ class TarotApp {
     const loadingEl = document.getElementById('ai-loading');
     const resultEl = document.getElementById('ai-result');
     
+    // Get AI mode text for display
+    const aiModeText = this.aiProvider === 'openai' ? 'OpenAI' : 
+                       this.aiProvider === 'google' ? 'Google Gemini' : 'Local';
+    const aiEmoji = this.aiProvider === 'openai' ? '🤖' : 
+                    this.aiProvider === 'google' ? '🌐' : '🔮';
+    
     analyzeBtn.disabled = true;
-    analyzeBtn.textContent = '🤖 Đang phân tích...';
+    analyzeBtn.textContent = `${aiEmoji} Đang phân tích với ${aiModeText}...`;
     loadingEl.classList.remove('hidden');
     resultEl.classList.add('hidden');
     
@@ -401,22 +419,32 @@ class TarotApp {
         result = this.getLocalAnalysis();
       }
       
+      // Add header showing which AI was used
+      const headerHtml = `<div class="ai-mode-header">${aiEmoji} Phân tích bằng ${aiModeText}</div>`;
+      result = headerHtml + result;
+      
       // Security: Only allow safe HTML tags from AI
       resultEl.innerHTML = this.sanitizeAIResponse(result);
       resultEl.classList.remove('hidden');
     } catch (error) {
       console.error('AI Analysis Error:', error);
       // Security: Sanitize error message
-      resultEl.innerHTML = `
+      const errorHtml = `
+        <div class="ai-mode-header">⚠️ Lỗi kết nối AI</div>
         <h3>❌ Lỗi</h3>
-        <p>Đã xảy ra lỗi khi phân tích: ${sanitizeHTML(error.message)}</p>
-        <p>Vui lòng thử lại hoặc chọn chế độ Local (miễn phí).</p>
+        <p>${sanitizeHTML(error.message)}</p>
+        <p><strong>Giải pháp:</strong></p>
+        <ul>
+          <li>Nếu dùng OpenAI/Gemini: Kiểm tra API key trong ⚙️ Cài Đặt AI</li>
+          <li>Hoặc chọn "🔮 Local (Miễn phí)" để sử dụng phân tích cơ bản</li>
+        </ul>
       `;
+      resultEl.innerHTML = errorHtml;
       resultEl.classList.remove('hidden');
     }
     
     loadingEl.classList.add('hidden');
-    analyzeBtn.textContent = '🔄 Phân Tích Lại';
+    analyzeBtn.textContent = `🔄 Phân Tích Lại với ${aiModeText}`;
     analyzeBtn.disabled = false;
   }
 
