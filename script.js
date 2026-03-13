@@ -80,10 +80,24 @@ class TarotApp {
   // ========================================
   
   loadSettings() {
-    // Ưu tiên đọc từ biến môi trường (Vercel)
-    // Sử dụng cách tương thích với static site
-    const envOpenAIKey = window.ENV_OPENAI_API_KEY || '';
-    const envGoogleKey = window.ENV_GEMINI_API_KEY || '';
+    // Đọc từ nhiều nguồn (biến môi trường Vercel hoặc inline)
+    // Thử nhiều prefix khác nhau
+    const envOpenAIKey = window.ENV_OPENAI_API_KEY || 
+                         window.VITE_OPENAI_API_KEY || 
+                         window.OPENAI_API_KEY || '';
+    const envGoogleKey = window.ENV_GEMINI_API_KEY || 
+                        window.VITE_GEMINI_API_KEY || 
+                        window.GEMINI_API_KEY || '';
+    
+    // Debug: log available env vars (remove in production)
+    console.log('🔑 Available Env Keys:', {
+      ENV_OPENAI: !!window.ENV_OPENAI_API_KEY,
+      VITE_OPENAI: !!window.VITE_OPENAI_API_KEY,
+      ENV_GEMINI: !!window.ENV_GEMINI_API_KEY,
+      VITE_GEMINI: !!window.VITE_GEMINI_API_KEY,
+      savedProvider: localStorage.getItem(STORAGE_KEYS.provider),
+      hasApiKey: !!localStorage.getItem(STORAGE_KEYS.apiKey)
+    });
     
     // Nếu có biến môi trường thì dùng, không thì dùng localStorage
     const savedProvider = localStorage.getItem(STORAGE_KEYS.provider) || 'local';
@@ -93,23 +107,28 @@ class TarotApp {
     if (envOpenAIKey && savedProvider === 'openai') {
       this.aiProvider = 'openai';
       this.apiKey = envOpenAIKey;
+      console.log('✅ Using OpenAI from env');
     } else if (envGoogleKey && savedProvider === 'google') {
       this.aiProvider = 'google';
       this.apiKey = envGoogleKey;
+      console.log('✅ Using Gemini from env');
     } else {
       this.aiProvider = savedProvider;
-      // Chỉ dùng savedApiKey nếu không có env key tương ứng
       this.apiKey = savedApiKey;
     }
     
     // Nếu có env key nhưng chưa chọn provider, mặc định chọn
-    if (envOpenAIKey && !localStorage.getItem(STORAGE_KEYS.provider)) {
-      this.aiProvider = 'openai';
-      this.apiKey = envOpenAIKey;
-    } else if (envGoogleKey && !localStorage.getItem(STORAGE_KEYS.provider)) {
+    if (envGoogleKey && !localStorage.getItem(STORAGE_KEYS.provider)) {
       this.aiProvider = 'google';
       this.apiKey = envGoogleKey;
+      console.log('✅ Auto-selected Gemini (from env)');
+    } else if (envOpenAIKey && !localStorage.getItem(STORAGE_KEYS.provider)) {
+      this.aiProvider = 'openai';
+      this.apiKey = envOpenAIKey;
+      console.log('✅ Auto-selected OpenAI (from env)');
     }
+    
+    console.log('📌 Final provider:', this.aiProvider, '| Has API key:', !!this.apiKey);
   }
 
   updateSettingsUI() {
