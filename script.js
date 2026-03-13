@@ -81,8 +81,9 @@ class TarotApp {
   
   loadSettings() {
     // Ưu tiên đọc từ biến môi trường (Vercel)
-    const envOpenAIKey = import.meta.env?.VITE_OPENAI_API_KEY || '';
-    const envGoogleKey = import.meta.env?.VITE_GEMINI_API_KEY || '';
+    // Sử dụng cách tương thích với static site
+    const envOpenAIKey = window.ENV_OPENAI_API_KEY || '';
+    const envGoogleKey = window.ENV_GEMINI_API_KEY || '';
     
     // Nếu có biến môi trường thì dùng, không thì dùng localStorage
     const savedProvider = localStorage.getItem(STORAGE_KEYS.provider) || 'local';
