@@ -22,6 +22,9 @@ class TarotApp {
     this.selectedCards = [];
     this.deck = [];
     this.selectedPositions = [];
+
+    // OpenRouter model cache (for dropdown)
+    this.openRouterFreeModels = null;
     
     this.init();
   }
@@ -68,6 +71,19 @@ class TarotApp {
     document.getElementById('save-settings').addEventListener('click', () => this.saveSettings());
     document.getElementById('ai-provider').addEventListener('change', (e) => this.onProviderChange(e));
     document.getElementById('clear-api-key').addEventListener('click', () => this.clearApiKey());
+
+    // Model select near Analyze button (OpenRouter)
+    const modelSelect = document.getElementById('ai-model-select');
+    if (modelSelect) {
+      modelSelect.addEventListener('change', (e) => {
+        const model = e.target.value;
+        if (model) {
+          localStorage.setItem(STORAGE_KEYS.openRouterModel, model);
+        } else {
+          localStorage.removeItem(STORAGE_KEYS.openRouterModel);
+        }
+      });
+    }
     
     // Close modal on outside click
     document.getElementById('settings-modal').addEventListener('click', (e) => {
@@ -95,6 +111,7 @@ class TarotApp {
     const openRouterModelGroup = document.getElementById('openrouter-model-group');
     const openRouterModelInput = document.getElementById('openrouter-model');
     const analyzeBtn = document.getElementById('analyze-btn');
+    const aiModelSelect = document.getElementById('ai-model-select');
     
     providerSelect.value = this.aiProvider;
     
@@ -112,6 +129,22 @@ class TarotApp {
         openRouterModelInput.value = localStorage.getItem(STORAGE_KEYS.openRouterModel) || AI_PROVIDERS.openrouter.model;
       } else {
         openRouterModelGroup.classList.add('hidden');
+      }
+    }
+
+    // OpenRouter: show model dropdown near Analyze button
+    if (aiModelSelect) {
+      if (this.aiProvider === 'openrouter') {
+        aiModelSelect.classList.remove('hidden');
+        // Ensure models are loaded/populated (non-blocking)
+        this.ensureOpenRouterFreeModelsLoaded();
+        // Keep selection in sync with localStorage
+        const selected = localStorage.getItem(STORAGE_KEYS.openRouterModel) || '';
+        if (aiModelSelect.value !== selected) {
+          aiModelSelect.value = selected;
+        }
+      } else {
+        aiModelSelect.classList.add('hidden');
       }
     }
     
@@ -582,6 +615,84 @@ class TarotApp {
       }
 
       return text;
+    }
+  }
+
+  // ========================================
+  // OpenRouter Models
+  // ========================================
+
+  async ensureOpenRouterFreeModelsLoaded() {
+    try {
+      // Already loaded
+      if (Array.isArray(this.openRouterFreeModels)) {
+        this.populateOpenRouterModelSelect(this.openRouterFreeModels);
+        return;
+      }
+
+      const aiModelSelect = document.getElementById('ai-model-select');
+      if (!aiModelSelect || this.aiProvider !== 'openrouter') return;
+
+      // Temporary loading option
+      if (aiModelSelect.options.length <= 1) {
+        const opt = document.createElement('option');
+        opt.value = '';
+        opt.textContent = 'Đang tải model free...';
+        aiModelSelect.appendChild(opt);
+      }
+
+      const headers = { 'Content-Type': 'application/json' };
+      // Some OpenRouter setups allow unauthenticated /models, but attach key if present.
+      const key = localStorage.getItem(STORAGE_KEYS.apiKey) || '';
+      if (key) headers['Authorization'] = `Bearer ${key}`;
+
+      const resp = await fetch('https://openrouter.ai/api/v1/models', { headers });
+      if (!resp.ok) {
+        // Don't throw hard; just keep dropdown usable.
+        console.warn('OpenRouter models fetch failed:', resp.status, await resp.text());
+        return;
+      }
+      const data = await resp.json();
+      const models = Array.isArray(data?.data) ? data.data : [];
+
+      // Heuristic: free models often have ":free" suffix.
+      // Another heuristic: prompt/completion price == 0.
+      const freeModels = models
+        .map(m => m?.id)
+        .filter(Boolean)
+        .filter(id => id.endsWith(':free'))
+        .sort((a, b) => a.localeCompare(b));
+
+      this.openRouterFreeModels = freeModels;
+      this.populateOpenRouterModelSelect(freeModels);
+    } catch (err) {
+      console.warn('OpenRouter models load error:', err);
+    }
+  }
+
+  populateOpenRouterModelSelect(modelIds) {
+    const aiModelSelect = document.getElementById('ai-model-select');
+    if (!aiModelSelect) return;
+    if (!Array.isArray(modelIds) || modelIds.length === 0) return;
+
+    const current = localStorage.getItem(STORAGE_KEYS.openRouterModel) || '';
+
+    // Preserve the first option (auto)
+    aiModelSelect.innerHTML = '';
+    const autoOpt = document.createElement('option');
+    autoOpt.value = '';
+    autoOpt.textContent = 'Model: (auto)';
+    aiModelSelect.appendChild(autoOpt);
+
+    modelIds.forEach(id => {
+      const opt = document.createElement('option');
+      opt.value = id;
+      opt.textContent = id;
+      aiModelSelect.appendChild(opt);
+    });
+
+    if (current && modelIds.includes(current)) {
+      aiModelSelect.value = current;
     }
   }
 }

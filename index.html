@@ -70,7 +70,12 @@
       <div id="selected-cards" class="selected-cards"></div>
 
       <div class="ai-section">
-        <button id="analyze-btn" class="btn btn-ai">🤖 Phân Tích AI</button>
+        <div class="ai-controls">
+          <button id="analyze-btn" class="btn btn-ai">🤖 Phân Tích AI</button>
+          <select id="ai-model-select" class="ai-model-select hidden" title="Chọn model (chỉ dùng cho OpenRouter)">
+            <option value="">Model: (auto)</option>
+          </select>
+        </div>
         <div id="ai-loading" class="ai-loading hidden">
           <div class="spinner"></div>
           <p>Đang phân tích...</p>
