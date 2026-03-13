@@ -496,8 +496,8 @@ const AI_PROVIDERS = {
   },
   google: {
     id: 'google',
-    name: '🌐 Google Gemini',
-    description: 'Phân tích sâu - Cần API Key',
+    name: '🌐 Google Gemini Flash',
+    description: 'Nhanh - Cần API Key',
     needsKey: true,
     endpoint: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent',
     keyParam: 'key',
@@ -509,6 +509,24 @@ const AI_PROVIDERS = {
       generationConfig: {
         temperature: 0.7,
         maxOutputTokens: 1000
+      }
+    })
+  },
+  googlePro: {
+    id: 'googlePro',
+    name: '🌟 Google Gemini Pro',
+    description: 'Mạnh nhất - Cần API Key',
+    needsKey: true,
+    endpoint: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-pro-exp-02-05:generateContent',
+    keyParam: 'key',
+    headers: (key) => ({
+      'Content-Type': 'application/json'
+    }),
+    body: (prompt) => ({
+      contents: [{ parts: [{ text: prompt }] }],
+      generationConfig: {
+        temperature: 0.7,
+        maxOutputTokens: 2000
       }
     })
   }
