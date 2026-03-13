@@ -146,15 +146,18 @@ class TarotApp {
   saveSettings() {
     const provider = document.getElementById('ai-provider').value;
     const apiKeyInput = document.getElementById('api-key').value.trim();
+    // If the user didn't actually change the key (input is masked), keep the stored real key.
+    const isMaskedKey = apiKeyInput.includes('****');
+    const effectiveApiKey = isMaskedKey ? (localStorage.getItem(STORAGE_KEYS.apiKey) || '') : apiKeyInput;
     
     localStorage.setItem(STORAGE_KEYS.provider, provider);
     
-    if (provider !== 'local' && apiKeyInput) {
-      localStorage.setItem(STORAGE_KEYS.apiKey, apiKeyInput);
+    if (provider !== 'local' && effectiveApiKey) {
+      localStorage.setItem(STORAGE_KEYS.apiKey, effectiveApiKey);
     }
     
     this.aiProvider = provider;
-    this.apiKey = apiKeyInput || localStorage.getItem(STORAGE_KEYS.apiKey) || '';
+    this.apiKey = effectiveApiKey || localStorage.getItem(STORAGE_KEYS.apiKey) || '';
     
     this.updateSettingsUI();
     this.closeSettings();
@@ -508,7 +511,23 @@ class TarotApp {
       }
       
       const data = await response.json();
-      return data.candidates[0].content.parts[0].text;
+
+      // Gemini responses can vary slightly; join any returned text parts safely.
+      const parts = data?.candidates?.[0]?.content?.parts;
+      const textFromParts = Array.isArray(parts)
+        ? parts.map(p => p?.text).filter(Boolean).join('')
+        : '';
+      const text = textFromParts
+        || data?.candidates?.[0]?.content?.text
+        || data?.candidates?.[0]?.text
+        || '';
+
+      if (!text) {
+        console.warn('Empty/unknown Gemini response shape:', data);
+        throw new Error('Gemini trả về dữ liệu trống (không có text). Vui lòng thử lại.');
+      }
+
+      return text;
     }
   }
 }

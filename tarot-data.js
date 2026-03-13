@@ -496,64 +496,10 @@ const AI_PROVIDERS = {
   },
   google: {
     id: 'google',
-    name: '🌐 Google Gemini Flash',
+    name: '🌐 Google Gemini 2.5 Flash Lite',
     description: 'Nhanh - Cần API Key',
     needsKey: true,
-    endpoint: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent',
-    keyParam: 'key',
-    headers: (key) => ({
-      'Content-Type': 'application/json'
-    }),
-    body: (prompt) => ({
-      contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: {
-        temperature: 0.7,
-        maxOutputTokens: 1000
-      }
-    })
-  },
-  googlePro: {
-    id: 'googlePro',
-    name: '🌟 Google Gemini Pro 2.0',
-    description: 'Mạnh nhất - Cần API Key',
-    needsKey: true,
-    endpoint: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-pro-exp-02-05:generateContent',
-    keyParam: 'key',
-    headers: (key) => ({
-      'Content-Type': 'application/json'
-    }),
-    body: (prompt) => ({
-      contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: {
-        temperature: 0.7,
-        maxOutputTokens: 2000
-      }
-    })
-  },
-  google15Pro: {
-    id: 'google15Pro',
-    name: '✨ Google Gemini 1.5 Pro',
-    description: 'Ổn định - Cần API Key',
-    needsKey: true,
-    endpoint: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro-002:generateContent',
-    keyParam: 'key',
-    headers: (key) => ({
-      'Content-Type': 'application/json'
-    }),
-    body: (prompt) => ({
-      contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: {
-        temperature: 0.7,
-        maxOutputTokens: 2000
-      }
-    })
-  },
-  google25Flash: {
-    id: 'google25Flash',
-    name: '🎯 Google Gemini 2.5 Flash',
-    description: 'Mới nhất - Cần API Key',
-    needsKey: true,
-    endpoint: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-native-audio-preview-12-2025:generateContent',
+    endpoint: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite-preview-09-2025:generateContent',
     keyParam: 'key',
     headers: (key) => ({
       'Content-Type': 'application/json'
