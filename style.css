@@ -477,6 +477,25 @@ textarea:focus-visible {
   justify-content: center;
 }
 
+.ai-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  justify-content: center;
+}
+
+.ai-model-select {
+  min-width: 220px;
+  padding: 12px 14px;
+  font-family: var(--font-body);
+  font-size: 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--color-gold-dark);
+  border-radius: 4px;
+  color: var(--color-text);
+}
+
 /* Result Screen */
 .result-header {
   text-align: center;
@@ -934,6 +953,7 @@ textarea:focus-visible {
   .btn {
     padding: 14px 18px;
     font-size: 1.05rem;
+    letter-spacing: 0.08em;
   }
   
   .ai-result {
@@ -1005,6 +1025,12 @@ textarea:focus-visible {
     width: 100%;
     max-width: 520px;
     margin: 8px 0;
+    letter-spacing: 0.06em;
+  }
+
+  .ai-model-select {
+    width: 100%;
+    max-width: 520px;
   }
 
   #question-input {

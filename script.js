@@ -96,8 +96,14 @@ class TarotApp {
   // ========================================
   
   loadSettings() {
-    this.aiProvider = localStorage.getItem(STORAGE_KEYS.provider) || 'local';
+    const storedProvider = localStorage.getItem(STORAGE_KEYS.provider);
+    this.aiProvider = storedProvider || 'openrouter';
     this.apiKey = localStorage.getItem(STORAGE_KEYS.apiKey) || '';
+
+    // Persist default provider if none was set
+    if (!storedProvider) {
+      localStorage.setItem(STORAGE_KEYS.provider, this.aiProvider);
+    }
     
     console.log('📌 Loaded settings - Provider:', this.aiProvider, '| Has API key:', !!this.apiKey);
   }
@@ -687,7 +693,7 @@ class TarotApp {
     if (!aiModelSelect) return;
     if (!Array.isArray(modelIds) || modelIds.length === 0) return;
 
-    const current = localStorage.getItem(STORAGE_KEYS.openRouterModel) || '';
+    let current = localStorage.getItem(STORAGE_KEYS.openRouterModel) || '';
 
     // Preserve the first option (auto)
     aiModelSelect.innerHTML = '';
@@ -703,8 +709,16 @@ class TarotApp {
       aiModelSelect.appendChild(opt);
     });
 
-    if (current && modelIds.includes(current)) {
-      aiModelSelect.value = current;
+    if (!current || !modelIds.includes(current)) {
+      current = modelIds[0];
+      localStorage.setItem(STORAGE_KEYS.openRouterModel, current);
+    }
+
+    aiModelSelect.value = current || '';
+
+    const openRouterModelInput = document.getElementById('openrouter-model');
+    if (openRouterModelInput && this.aiProvider === 'openrouter') {
+      openRouterModelInput.value = current || AI_PROVIDERS.openrouter.model;
     }
   }
 }
