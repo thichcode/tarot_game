@@ -466,7 +466,8 @@ Câu hỏi của người xem: "${question || 'Không có câu hỏi cụ thể,
 const STORAGE_KEYS = {
   provider: 'tarot_ai_provider',
   apiKey: 'tarot_api_key',
-  history: 'tarot_history'
+  history: 'tarot_history',
+  openRouterModel: 'tarot_openrouter_model'
 };
 
 const AI_PROVIDERS = {
@@ -518,9 +519,8 @@ const AI_PROVIDERS = {
     description: 'Nhiều model (có free models*) - Cần API Key',
     needsKey: true,
     endpoint: 'https://openrouter.ai/api/v1/chat/completions',
-    // Pick a default that is commonly available and cheap; you can change later.
-    // Many free models vary over time; OpenRouter will reject if the model isn't available.
-    model: 'meta-llama/llama-3.1-8b-instruct:free',
+    // Default free model (OpenRouter free list can change over time).
+    model: 'google/gemma-2-9b-it:free',
     headers: (key) => ({
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${key}`
@@ -528,8 +528,9 @@ const AI_PROVIDERS = {
       // 'HTTP-Referer': location.origin,
       // 'X-Title': 'Tarot Game'
     }),
-    body: (prompt) => ({
-      model: 'meta-llama/llama-3.1-8b-instruct:free',
+    // body(model, prompt) lets UI override the model without changing code.
+    body: (model, prompt) => ({
+      model,
       messages: [{ role: 'user', content: prompt }],
       temperature: 0.7,
       max_tokens: 1000

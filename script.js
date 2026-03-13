@@ -92,6 +92,8 @@ class TarotApp {
     const currentProvider = document.getElementById('current-provider');
     const clearBtn = document.getElementById('clear-api-key');
     const apiKeyInput = document.getElementById('api-key');
+    const openRouterModelGroup = document.getElementById('openrouter-model-group');
+    const openRouterModelInput = document.getElementById('openrouter-model');
     const analyzeBtn = document.getElementById('analyze-btn');
     
     providerSelect.value = this.aiProvider;
@@ -101,6 +103,16 @@ class TarotApp {
       apiKeyGroup.classList.remove('hidden');
     } else {
       apiKeyGroup.classList.add('hidden');
+    }
+
+    // OpenRouter: show model input (optional)
+    if (openRouterModelGroup && openRouterModelInput) {
+      if (this.aiProvider === 'openrouter') {
+        openRouterModelGroup.classList.remove('hidden');
+        openRouterModelInput.value = localStorage.getItem(STORAGE_KEYS.openRouterModel) || AI_PROVIDERS.openrouter.model;
+      } else {
+        openRouterModelGroup.classList.add('hidden');
+      }
     }
     
     currentProvider.textContent = `Provider: ${provider ? provider.name : 'Local'}`;
@@ -148,6 +160,7 @@ class TarotApp {
   saveSettings() {
     const provider = document.getElementById('ai-provider').value;
     const apiKeyInput = document.getElementById('api-key').value.trim();
+    const openRouterModelInput = document.getElementById('openrouter-model');
     // If the user didn't actually change the key (input is masked), keep the stored real key.
     const isMaskedKey = apiKeyInput.includes('****');
     const effectiveApiKey = isMaskedKey ? (localStorage.getItem(STORAGE_KEYS.apiKey) || '') : apiKeyInput;
@@ -156,6 +169,16 @@ class TarotApp {
     
     if (provider !== 'local' && effectiveApiKey) {
       localStorage.setItem(STORAGE_KEYS.apiKey, effectiveApiKey);
+    }
+
+    // Persist OpenRouter model override (if provided)
+    if (provider === 'openrouter' && openRouterModelInput) {
+      const model = openRouterModelInput.value.trim();
+      if (model) {
+        localStorage.setItem(STORAGE_KEYS.openRouterModel, model);
+      } else {
+        localStorage.removeItem(STORAGE_KEYS.openRouterModel);
+      }
     }
     
     this.aiProvider = provider;
@@ -501,10 +524,11 @@ class TarotApp {
       return data.choices[0].message.content;
       
     } else if (this.aiProvider === 'openrouter') {
+      const model = localStorage.getItem(STORAGE_KEYS.openRouterModel) || provider.model;
       response = await fetch(provider.endpoint, {
         method: 'POST',
         headers: provider.headers(this.apiKey),
-        body: JSON.stringify(provider.body(prompt))
+        body: JSON.stringify(provider.body(model, prompt))
       });
 
       if (!response.ok) {
