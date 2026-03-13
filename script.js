@@ -79,22 +79,28 @@ class TarotApp {
   // Settings Management
   // ========================================
   
-  loadSettings() {
-    // Đọc từ nhiều nguồn (biến môi trường Vercel hoặc inline)
-    // Thử nhiều prefix khác nhau
-    const envOpenAIKey = window.ENV_OPENAI_API_KEY || 
-                         window.VITE_OPENAI_API_KEY || 
-                         window.OPENAI_API_KEY || '';
-    const envGoogleKey = window.ENV_GEMINI_API_KEY || 
-                        window.VITE_GEMINI_API_KEY || 
-                        window.GEMINI_API_KEY || '';
+  async loadSettings() {
+    // Thử đọc từ API endpoint trước
+    try {
+      const response = await fetch('/api/config');
+      if (response.ok) {
+        const config = await response.json();
+        window.ENV_OPENAI_API_KEY = config.openaiApiKey || '';
+        window.ENV_GEMINI_API_KEY = config.geminiApiKey || '';
+        console.log('✅ Loaded config from API');
+      }
+    } catch (e) {
+      console.log('⚠️ Config API not available, trying env vars');
+    }
     
-    // Debug: log available env vars (remove in production)
+    // Fallback: đọc từ inline vars
+    const envOpenAIKey = window.ENV_OPENAI_API_KEY || '';
+    const envGoogleKey = window.ENV_GEMINI_API_KEY || '';
+    
+    // Debug
     console.log('🔑 Available Env Keys:', {
       ENV_OPENAI: !!window.ENV_OPENAI_API_KEY,
-      VITE_OPENAI: !!window.VITE_OPENAI_API_KEY,
       ENV_GEMINI: !!window.ENV_GEMINI_API_KEY,
-      VITE_GEMINI: !!window.VITE_GEMINI_API_KEY,
       savedProvider: localStorage.getItem(STORAGE_KEYS.provider),
       hasApiKey: !!localStorage.getItem(STORAGE_KEYS.apiKey)
     });
@@ -103,29 +109,21 @@ class TarotApp {
     const savedProvider = localStorage.getItem(STORAGE_KEYS.provider) || 'local';
     const savedApiKey = localStorage.getItem(STORAGE_KEYS.apiKey) || '';
     
-    // Xác định provider và key dựa trên biến môi trường
-    if (envOpenAIKey && savedProvider === 'openai') {
-      this.aiProvider = 'openai';
-      this.apiKey = envOpenAIKey;
-      console.log('✅ Using OpenAI from env');
-    } else if (envGoogleKey && savedProvider === 'google') {
+    // Ưu tiên dùng key từ env nếu có
+    if (envGoogleKey) {
       this.aiProvider = 'google';
       this.apiKey = envGoogleKey;
       console.log('✅ Using Gemini from env');
+    } else if (envOpenAIKey) {
+      this.aiProvider = 'openai';
+      this.apiKey = envOpenAIKey;
+      console.log('✅ Using OpenAI from env');
+    } else if (savedProvider !== 'local' && savedApiKey) {
+      this.aiProvider = savedProvider;
+      this.apiKey = savedApiKey;
     } else {
       this.aiProvider = savedProvider;
       this.apiKey = savedApiKey;
-    }
-    
-    // Nếu có env key nhưng chưa chọn provider, mặc định chọn
-    if (envGoogleKey && !localStorage.getItem(STORAGE_KEYS.provider)) {
-      this.aiProvider = 'google';
-      this.apiKey = envGoogleKey;
-      console.log('✅ Auto-selected Gemini (from env)');
-    } else if (envOpenAIKey && !localStorage.getItem(STORAGE_KEYS.provider)) {
-      this.aiProvider = 'openai';
-      this.apiKey = envOpenAIKey;
-      console.log('✅ Auto-selected OpenAI (from env)');
     }
     
     console.log('📌 Final provider:', this.aiProvider, '| Has API key:', !!this.apiKey);
