@@ -511,5 +511,28 @@ const AI_PROVIDERS = {
         maxOutputTokens: 2000
       }
     })
+  },
+  openrouter: {
+    id: 'openrouter',
+    name: '🧩 OpenRouter',
+    description: 'Nhiều model (có free models*) - Cần API Key',
+    needsKey: true,
+    endpoint: 'https://openrouter.ai/api/v1/chat/completions',
+    // Pick a default that is commonly available and cheap; you can change later.
+    // Many free models vary over time; OpenRouter will reject if the model isn't available.
+    model: 'meta-llama/llama-3.1-8b-instruct:free',
+    headers: (key) => ({
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${key}`
+      // Optional (recommended) headers per OpenRouter docs:
+      // 'HTTP-Referer': location.origin,
+      // 'X-Title': 'Tarot Game'
+    }),
+    body: (prompt) => ({
+      model: 'meta-llama/llama-3.1-8b-instruct:free',
+      messages: [{ role: 'user', content: prompt }],
+      temperature: 0.7,
+      max_tokens: 1000
+    })
   }
 };

@@ -120,6 +120,8 @@ class TarotApp {
         analyzeBtn.textContent = '🤖 Phân Tích với OpenAI';
       } else if (this.aiProvider === 'google') {
         analyzeBtn.textContent = '🌐 Phân Tích với Gemini Flash';
+      } else if (this.aiProvider === 'openrouter') {
+        analyzeBtn.textContent = '🧩 Phân Tích với OpenRouter';
       } else if (this.aiProvider === 'googlePro') {
         analyzeBtn.textContent = '🌟 Phân Tích với Gemini Pro 2.0';
       } else if (this.aiProvider === 'google15Pro') {
@@ -383,11 +385,13 @@ class TarotApp {
     // Get AI mode text for display
     const aiModeText = this.aiProvider === 'openai' ? 'OpenAI' : 
                        this.aiProvider === 'google' ? 'Google Gemini Flash' : 
+                       this.aiProvider === 'openrouter' ? 'OpenRouter' :
                        this.aiProvider === 'googlePro' ? 'Google Gemini Pro 2.0' :
                        this.aiProvider === 'google15Pro' ? 'Google Gemini 1.5 Pro' :
                        this.aiProvider === 'google25Flash' ? 'Google Gemini 2.5 Flash' : 'Local';
     const aiEmoji = this.aiProvider === 'openai' ? '🤖' : 
                     this.aiProvider === 'google' ? '🌐' :
+                    this.aiProvider === 'openrouter' ? '🧩' :
                     this.aiProvider === 'googlePro' ? '🌟' :
                     this.aiProvider === 'google15Pro' ? '✨' :
                     this.aiProvider === 'google25Flash' ? '🎯' : '🔮';
@@ -402,7 +406,7 @@ class TarotApp {
       
       if (this.aiProvider === 'local') {
         result = this.getLocalAnalysis();
-      } else if (['openai', 'google', 'googlePro', 'google15Pro', 'google25Flash'].includes(this.aiProvider)) {
+      } else if (['openai', 'google', 'openrouter', 'googlePro', 'google15Pro', 'google25Flash'].includes(this.aiProvider)) {
         result = await this.getAIAnalysis();
       } else {
         result = this.getLocalAnalysis();
@@ -496,6 +500,32 @@ class TarotApp {
       const data = await response.json();
       return data.choices[0].message.content;
       
+    } else if (this.aiProvider === 'openrouter') {
+      response = await fetch(provider.endpoint, {
+        method: 'POST',
+        headers: provider.headers(this.apiKey),
+        body: JSON.stringify(provider.body(prompt))
+      });
+
+      if (!response.ok) {
+        let errText = '';
+        try {
+          const errJson = await response.json();
+          errText = errJson?.error?.message || errJson?.message || JSON.stringify(errJson);
+        } catch (_) {
+          errText = await response.text();
+        }
+        throw new Error(errText || 'OpenRouter API Error');
+      }
+
+      const data = await response.json();
+      const text = data?.choices?.[0]?.message?.content || '';
+      if (!text) {
+        console.warn('Empty/unknown OpenRouter response shape:', data);
+        throw new Error('OpenRouter trả về dữ liệu trống (không có content). Vui lòng thử lại.');
+      }
+      return text;
+
     } else if (this.aiProvider === 'google') {
       const url = `${provider.endpoint}?key=${this.apiKey}`;
       
