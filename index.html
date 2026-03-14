@@ -16,6 +16,9 @@
       <h1 class="title">🔮 Tarot</h1>
       <p class="subtitle">Khám phá vận mệnh của bạn</p>
     </header>
+    <div class="header-actions">
+      <button id="how-to-btn" class="btn btn-link">📘 Cách dùng</button>
+    </div>
 
     <!-- Welcome Screen -->
     <div id="welcome-screen" class="screen active">
@@ -67,10 +70,19 @@
         <p id="result-question" class="result-question"></p>
       </div>
 
+      <div id="history-panel" class="history-panel hidden">
+        <div class="history-legend">Lần bói gần nhất</div>
+        <p id="history-date" class="history-date"></p>
+        <p id="history-question" class="history-question"></p>
+        <div id="history-cards" class="history-cards"></div>
+        <button id="history-clear-btn" class="btn btn-small history-clear">Xóa lưu</button>
+      </div>
+
       <div id="selected-cards" class="selected-cards"></div>
 
       <div class="ai-section">
         <div class="ai-controls">
+          <span id="provider-chip" class="provider-chip">Provider: Local</span>
           <button id="analyze-btn" class="btn btn-ai">🤖 Phân Tích AI</button>
           <select id="ai-model-select" class="ai-model-select hidden" title="Chọn model (chỉ dùng cho OpenRouter)">
             <option value="">Model: (auto)</option>
@@ -133,6 +145,28 @@
         </div>
         <div class="modal-footer">
           <button id="save-settings" class="btn btn-primary">Lưu</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="onboarding-modal" class="modal hidden">
+      <div class="modal-content onboarding-modal">
+        <div class="modal-header">
+          <h2>📜 Cách dùng Tarot</h2>
+          <button id="close-onboarding" class="close-btn" aria-label="Đóng hướng dẫn">&times;</button>
+        </div>
+        <div class="modal-body">
+          <p>Hãy để Tarot dẫn lối trong 7 bước:</p>
+          <ol class="onboarding-list">
+            <li>Thư giãn & thở đều, giữ câu hỏi trong tâm trí.</li>
+            <li>Ấn “Bắt Đầu”, nhập câu hỏi (hoặc bỏ trống để nhận thông điệp chung).</li>
+            <li>“Xáo Bài & Chọn” rồi chạm ba lá bất kỳ để định hướng quá khứ/hiện tại/tương lai.</li>
+            <li>Nhấn “Xem Kết Quả” để hiển thị ba lá cùng ý nghĩa sơ khởi.</li>
+            <li>Ấn “Phân Tích AI” để gửi prompt đến OpenAI/Gemini/OpenRouter hoặc dùng phân tích local.</li>
+            <li>Đọc phần “3 lá bạn chọn” trước khi vào nội dung AI để cảm nhận thông điệp riêng.</li>
+            <li>Lưu lại lần bói gần nhất ở mục lịch sử hoặc chọn “Bói Lại”.</li>
+          </ol>
+          <p class="onboarding-note">Tip: thêm cảm xúc, mục tiêu vào câu hỏi để AI có thể chuẩn hóa thông điệp.</p>
         </div>
       </div>
     </div>

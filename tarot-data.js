@@ -470,6 +470,8 @@ const STORAGE_KEYS = {
   openRouterModel: 'tarot_openrouter_model'
 };
 
+const ONBOARDING_STORAGE_KEY = 'tarot_onboarding_seen';
+
 const AI_PROVIDERS = {
   local: {
     id: 'local',

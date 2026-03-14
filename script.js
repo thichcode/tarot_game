@@ -25,20 +25,25 @@ class TarotApp {
 
     // OpenRouter model cache (for dropdown)
     this.openRouterFreeModels = null;
-    
+    this.history = null;
+    this.onboardingTimer = null;
+
     this.init();
   }
 
   init() {
     this.loadSettings();
+    this.loadHistory();
     this.bindEvents();
     this.updateSettingsUI();
+    this.renderHistory();
+    this.setupOnboarding();
   }
 
   // ========================================
   // Navigation
   // ========================================
-  
+
   showScreen(screenId) {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     document.getElementById(screenId).classList.add('active');
@@ -48,24 +53,24 @@ class TarotApp {
   // ========================================
   // Event Bindings
   // ========================================
-  
+
   bindEvents() {
     // Welcome Screen
     document.getElementById('start-btn').addEventListener('click', () => this.showScreen('question-screen'));
     document.getElementById('settings-btn').addEventListener('click', () => this.openSettings());
-    
+
     // Question Screen
     document.getElementById('shuffle-btn').addEventListener('click', () => this.startCardSelection());
-    
+
     // Cards Screen
     document.getElementById('read-btn').addEventListener('click', () => this.showResults());
     document.getElementById('reset-btn').addEventListener('click', () => this.resetSelection());
-    
+
     // Result Screen
     document.getElementById('analyze-btn').addEventListener('click', () => this.analyzeWithAI());
     document.getElementById('new-reading-btn').addEventListener('click', () => this.newReading());
     document.getElementById('back-to-cards-btn').addEventListener('click', () => this.showScreen('cards-screen'));
-    
+
     // Settings Modal
     document.getElementById('close-settings').addEventListener('click', () => this.closeSettings());
     document.getElementById('save-settings').addEventListener('click', () => this.saveSettings());
@@ -84,17 +89,41 @@ class TarotApp {
         }
       });
     }
-    
+
     // Close modal on outside click
     document.getElementById('settings-modal').addEventListener('click', (e) => {
       if (e.target.id === 'settings-modal') this.closeSettings();
     });
+
+    const howToBtn = document.getElementById('how-to-btn');
+    if (howToBtn) {
+      howToBtn.addEventListener('click', () => this.openOnboarding());
+    }
+
+    const onboardingModal = document.getElementById('onboarding-modal');
+    if (onboardingModal) {
+      onboardingModal.addEventListener('click', (e) => {
+        if (e.target === onboardingModal) {
+          this.closeOnboarding();
+        }
+      });
+    }
+
+    const closeOnboardingBtn = document.getElementById('close-onboarding');
+    if (closeOnboardingBtn) {
+      closeOnboardingBtn.addEventListener('click', () => this.closeOnboarding());
+    }
+
+    const historyClearBtn = document.getElementById('history-clear-btn');
+    if (historyClearBtn) {
+      historyClearBtn.addEventListener('click', () => this.clearHistory());
+    }
   }
 
   // ========================================
   // Settings Management
   // ========================================
-  
+
   loadSettings() {
     const storedProvider = localStorage.getItem(STORAGE_KEYS.provider);
     this.aiProvider = storedProvider || 'openrouter';
@@ -104,8 +133,18 @@ class TarotApp {
     if (!storedProvider) {
       localStorage.setItem(STORAGE_KEYS.provider, this.aiProvider);
     }
-    
+
     console.log('📌 Loaded settings - Provider:', this.aiProvider, '| Has API key:', !!this.apiKey);
+  }
+
+  loadHistory() {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEYS.history);
+      this.history = stored ? JSON.parse(stored) : null;
+    } catch (error) {
+      console.warn('Unable to parse history:', error);
+      this.history = null;
+    }
   }
 
   updateSettingsUI() {
@@ -153,9 +192,9 @@ class TarotApp {
         aiModelSelect.classList.add('hidden');
       }
     }
-    
+
     currentProvider.textContent = `Provider: ${provider ? provider.name : 'Local'}`;
-    
+
     if (this.apiKey) {
       clearBtn.classList.remove('hidden');
       // Security: Show masked key, don't expose actual key
@@ -164,7 +203,7 @@ class TarotApp {
       clearBtn.classList.add('hidden');
       apiKeyInput.value = '';
     }
-    
+
     // Update analyze button to show which AI is being used
     if (analyzeBtn) {
       if (this.aiProvider === 'openai') {
@@ -183,12 +222,21 @@ class TarotApp {
         analyzeBtn.textContent = '🤖 Phân Tích AI (Local)';
       }
     }
+
+    this.updateProviderBadge();
+  }
+
+  updateProviderBadge() {
+    const chip = document.getElementById('provider-chip');
+    if (!chip) return;
+    const provider = AI_PROVIDERS[this.aiProvider];
+    chip.textContent = provider ? `Provider: ${provider.name}` : 'Provider: Local';
   }
 
   onProviderChange(e) {
     const provider = AI_PROVIDERS[e.target.value];
     const apiKeyGroup = document.getElementById('api-key-group');
-    
+
     if (provider && provider.needsKey) {
       apiKeyGroup.classList.remove('hidden');
     } else {
@@ -203,9 +251,9 @@ class TarotApp {
     // If the user didn't actually change the key (input is masked), keep the stored real key.
     const isMaskedKey = apiKeyInput.includes('****');
     const effectiveApiKey = isMaskedKey ? (localStorage.getItem(STORAGE_KEYS.apiKey) || '') : apiKeyInput;
-    
+
     localStorage.setItem(STORAGE_KEYS.provider, provider);
-    
+
     if (provider !== 'local' && effectiveApiKey) {
       localStorage.setItem(STORAGE_KEYS.apiKey, effectiveApiKey);
     }
@@ -219,10 +267,10 @@ class TarotApp {
         localStorage.removeItem(STORAGE_KEYS.openRouterModel);
       }
     }
-    
+
     this.aiProvider = provider;
     this.apiKey = effectiveApiKey || localStorage.getItem(STORAGE_KEYS.apiKey) || '';
-    
+
     this.updateSettingsUI();
     this.closeSettings();
   }
@@ -245,7 +293,7 @@ class TarotApp {
   // ========================================
   // Card Logic
   // ========================================
-  
+
   shuffleDeck() {
     const shuffled = [...TAROT_CARDS];
     for (let i = shuffled.length - 1; i > 0; i--) {
@@ -260,22 +308,22 @@ class TarotApp {
     this.selectedCards = [];
     this.selectedPositions = [];
     this.deck = this.shuffleDeck();
-    
+
     this.renderDeck();
     this.showScreen('cards-screen');
     this.updateSelectionCounter();
-    
+
     document.getElementById('read-btn').disabled = true;
   }
 
   renderDeck() {
     const deckEl = document.getElementById('deck');
     deckEl.innerHTML = '';
-    
+
     // Add shuffle animation
     deckEl.classList.add('shuffling');
     setTimeout(() => deckEl.classList.remove('shuffling'), 500);
-    
+
     // Render cards with slight random offset for natural look
     this.deck.forEach((card, index) => {
       const cardEl = this.createCardElement(card, index);
@@ -288,18 +336,18 @@ class TarotApp {
     cardEl.className = 'card';
     cardEl.dataset.index = index;
     cardEl.dataset.cardId = card.id;
-    
+
     // Get card colors
     const gradientColors = card.gradient || ['#2d1f1f', '#1a0f0f'];
     const symbolColor = card.color || '#d4af37';
-    
+
     // Add slight random rotation and offset for natural look
     const randomRotation = (Math.random() - 0.5) * 6;
     const randomOffsetX = (Math.random() - 0.5) * 10;
     const randomOffsetY = (Math.random() - 0.5) * 8;
-    
+
     cardEl.style.transform = `rotate(${randomRotation}deg) translate(${randomOffsetX}px, ${randomOffsetY}px)`;
-    
+
     cardEl.innerHTML = `
       <div class="card-inner">
         <div class="card-face card-back"></div>
@@ -313,41 +361,41 @@ class TarotApp {
         </div>
       </div>
     `;
-    
+
     cardEl.addEventListener('click', () => this.selectCard(cardEl, card));
-    
+
     return cardEl;
   }
 
   selectCard(cardEl, card) {
     // Check if already selected
     if (cardEl.classList.contains('selected')) return;
-    
+
     // Check if max selection reached
     if (this.selectedCards.length >= 3) {
       return;
     }
-    
+
     // Mark as selected and flip the card first
     cardEl.classList.add('selected');
     cardEl.classList.add('flipping');
-    
+
     // Store the card
     this.selectedCards.push(card);
     this.selectedPositions.push(this.selectedCards.length - 1);
-    
+
     this.updateSelectionCounter();
-    
+
     // Enable read button if 3 cards selected
     if (this.selectedCards.length === 3) {
       document.getElementById('read-btn').disabled = false;
     }
-    
+
     // Flip animation - show the front of card, then hide after
     setTimeout(() => {
       cardEl.classList.add('flipped');
     }, 100);
-    
+
     // Hide the card after flip animation completes
     setTimeout(() => {
       cardEl.style.opacity = '0';
@@ -371,32 +419,32 @@ class TarotApp {
   // ========================================
   // Results
   // ========================================
-  
+
   showResults() {
     const resultQuestion = document.getElementById('result-question');
     const selectedCardsEl = document.getElementById('selected-cards');
-    
+
     // Show question
     resultQuestion.textContent = this.question || 'Không có câu hỏi cụ thể';
-    
+
     // Render selected cards
     selectedCardsEl.innerHTML = '';
-    
+
     POSITIONS.forEach((position, index) => {
       const card = this.selectedCards[index];
       if (!card) return;
-      
+
       const cardEl = document.createElement('div');
       cardEl.className = 'result-card flipped';
-      
+
       let meaning = '';
       if (position.id === 'past') meaning = card.meaningPast;
       else if (position.id === 'present') meaning = card.meaningPresent;
       else if (position.id === 'future') meaning = card.meaningFuture;
-      
+
       const gradientColors = card.gradient || ['#2d1f1f', '#1a0f0f'];
       const symbolColor = card.color || '#d4af37';
-      
+
       cardEl.innerHTML = `
         <div class="card">
           <div class="card-inner">
@@ -414,17 +462,18 @@ class TarotApp {
         <div class="card-position">${position.name}</div>
         <div class="card-meaning">${meaning}</div>
       `;
-      
+
       selectedCardsEl.appendChild(cardEl);
     });
-    
+
     // Reset AI result
     document.getElementById('ai-result').classList.add('hidden');
     document.getElementById('ai-loading').classList.add('hidden');
     document.getElementById('analyze-btn').disabled = false;
     document.getElementById('analyze-btn').textContent = '🤖 Phân Tích AI';
-    
+
     this.showScreen('result-screen');
+    this.saveHistory();
   }
 
   newReading() {
@@ -435,37 +484,131 @@ class TarotApp {
     this.showScreen('welcome-screen');
   }
 
+  saveHistory() {
+    if (this.selectedCards.length < 3) return;
+    const cards = POSITIONS.map((position, index) => {
+      const card = this.selectedCards[index];
+      if (!card) return null;
+      return {
+        position: position.name,
+        name: card.name,
+        nameVn: card.nameVn
+      };
+    }).filter(Boolean);
+
+    if (!cards.length) return;
+
+    const historyEntry = {
+      timestamp: Date.now(),
+      question: this.question,
+      provider: this.aiProvider,
+      cards
+    };
+
+    localStorage.setItem(STORAGE_KEYS.history, JSON.stringify(historyEntry));
+    this.history = historyEntry;
+    this.renderHistory();
+  }
+
+  renderHistory() {
+    const panel = document.getElementById('history-panel');
+    const dateEl = document.getElementById('history-date');
+    const questionEl = document.getElementById('history-question');
+    const cardsEl = document.getElementById('history-cards');
+
+    if (!panel || !this.history || !Array.isArray(this.history.cards) || !cardsEl) {
+      if (panel) panel.classList.add('hidden');
+      return;
+    }
+
+    panel.classList.remove('hidden');
+
+    const date = new Date(this.history.timestamp);
+    const providerLabel = AI_PROVIDERS[this.history.provider]?.name || '🔮 Local';
+    if (dateEl) {
+      dateEl.textContent = `Lần bói lúc ${date.toLocaleString('vi-VN', { dateStyle: 'short', timeStyle: 'short' })} (${providerLabel})`;
+    }
+
+    if (questionEl) {
+      questionEl.textContent = this.history.question ? `"${this.history.question}"` : 'Đã bỏ trống câu hỏi.';
+    }
+
+    cardsEl.innerHTML = '';
+    this.history.cards.forEach(card => {
+      const badge = document.createElement('span');
+      badge.className = 'history-card';
+      badge.textContent = `${card.position}: ${card.nameVn}`;
+      cardsEl.appendChild(badge);
+    });
+  }
+
+  clearHistory() {
+    localStorage.removeItem(STORAGE_KEYS.history);
+    this.history = null;
+    this.renderHistory();
+  }
+
+  setupOnboarding() {
+    const seen = localStorage.getItem(ONBOARDING_STORAGE_KEY) === 'true';
+    if (seen) return;
+    this.onboardingTimer = setTimeout(() => {
+      this.openOnboarding(true);
+    }, 1200);
+  }
+
+  openOnboarding(auto = false) {
+    const modal = document.getElementById('onboarding-modal');
+    if (!modal) return;
+    modal.classList.remove('hidden');
+    document.body.classList.add('modal-open');
+    if (!auto) {
+      localStorage.setItem(ONBOARDING_STORAGE_KEY, 'true');
+    }
+  }
+
+  closeOnboarding() {
+    const modal = document.getElementById('onboarding-modal');
+    if (!modal) return;
+    modal.classList.add('hidden');
+    document.body.classList.remove('modal-open');
+    localStorage.setItem(ONBOARDING_STORAGE_KEY, 'true');
+    if (this.onboardingTimer) {
+      clearTimeout(this.onboardingTimer);
+      this.onboardingTimer = null;
+    }
+  }
+
   // ========================================
   // AI Analysis
   // ========================================
-  
+
   async analyzeWithAI() {
     const analyzeBtn = document.getElementById('analyze-btn');
     const loadingEl = document.getElementById('ai-loading');
     const resultEl = document.getElementById('ai-result');
-    
+
     // Get AI mode text for display
-    const aiModeText = this.aiProvider === 'openai' ? 'OpenAI' : 
-                       this.aiProvider === 'google' ? 'Google Gemini Flash' : 
+    const aiModeText = this.aiProvider === 'openai' ? 'OpenAI' :
+                       this.aiProvider === 'google' ? 'Google Gemini Flash' :
                        this.aiProvider === 'openrouter' ? 'OpenRouter' :
                        this.aiProvider === 'googlePro' ? 'Google Gemini Pro 2.0' :
                        this.aiProvider === 'google15Pro' ? 'Google Gemini 1.5 Pro' :
                        this.aiProvider === 'google25Flash' ? 'Google Gemini 2.5 Flash' : 'Local';
-    const aiEmoji = this.aiProvider === 'openai' ? '🤖' : 
+    const aiEmoji = this.aiProvider === 'openai' ? '🤖' :
                     this.aiProvider === 'google' ? '🌐' :
                     this.aiProvider === 'openrouter' ? '🧩' :
                     this.aiProvider === 'googlePro' ? '🌟' :
                     this.aiProvider === 'google15Pro' ? '✨' :
                     this.aiProvider === 'google25Flash' ? '🎯' : '🔮';
-    
+
     analyzeBtn.disabled = true;
     analyzeBtn.textContent = `${aiEmoji} Đang phân tích với ${aiModeText}...`;
     loadingEl.classList.remove('hidden');
     resultEl.classList.add('hidden');
-    
+
     try {
       let result;
-      
+
       if (this.aiProvider === 'local') {
         result = this.getLocalAnalysis();
       } else if (['openai', 'google', 'openrouter', 'googlePro', 'google15Pro', 'google25Flash'].includes(this.aiProvider)) {
@@ -473,11 +616,11 @@ class TarotApp {
       } else {
         result = this.getLocalAnalysis();
       }
-      
+
       // Add header showing which AI was used
       const headerHtml = `<div class="ai-mode-header">${aiEmoji} Phân tích bằng ${aiModeText}</div>`;
       result = headerHtml + result;
-      
+
       // Security: Only allow safe HTML tags from AI
       resultEl.innerHTML = this.sanitizeAIResponse(result);
       resultEl.classList.remove('hidden');
@@ -497,7 +640,7 @@ class TarotApp {
       resultEl.innerHTML = errorHtml;
       resultEl.classList.remove('hidden');
     }
-    
+
     loadingEl.classList.add('hidden');
     analyzeBtn.textContent = `🔄 Phân Tích Lại với ${aiModeText}`;
     analyzeBtn.disabled = false;
@@ -507,14 +650,14 @@ class TarotApp {
   sanitizeAIResponse(html) {
     const allowedTags = ['h1','h2','h3','h4','h5','h6','p','br','hr','ul','ol','li','blockquote','table','tr','td','th','strong','em','span','a'];
     const allowedAttrs = { 'a': ['href'], 'span': ['class'] };
-    
+
     const temp = document.createElement('div');
     temp.innerHTML = html;
-    
+
     // Remove script tags
     const scripts = temp.querySelectorAll('script');
     scripts.forEach(s => s.remove());
-    
+
     // Remove event handlers
     const allElements = temp.querySelectorAll('*');
     allElements.forEach(el => {
@@ -524,7 +667,7 @@ class TarotApp {
         }
       });
     });
-    
+
     return temp.innerHTML;
   }
 
@@ -535,14 +678,14 @@ class TarotApp {
 
   async getAIAnalysis() {
     const provider = AI_PROVIDERS[this.aiProvider];
-    
+
     // If no client-side key, use secure serverless proxy on Vercel (/api/analyze)
     const hasClientKey = !!this.apiKey;
     const canUseProxy = ['openai', 'google', 'openrouter'].includes(this.aiProvider);
     if (provider.needsKey && !hasClientKey && !canUseProxy) {
       throw new Error('Vui lòng nhập API Key trong cài đặt');
     }
-    
+
     const prompt = AI_PROMPT(
       this.selectedCards.map(c => c.name),
       this.question
@@ -568,24 +711,24 @@ class TarotApp {
       }
       return data.text;
     }
-    
+
     let response;
-    
+
     if (this.aiProvider === 'openai') {
       response = await fetch(provider.endpoint, {
         method: 'POST',
         headers: provider.headers(this.apiKey),
         body: JSON.stringify(provider.body(prompt))
       });
-      
+
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.error?.message || 'OpenAI API Error');
       }
-      
+
       const data = await response.json();
       return data.choices[0].message.content;
-      
+
     } else if (this.aiProvider === 'openrouter') {
       const model = localStorage.getItem(STORAGE_KEYS.openRouterModel) || provider.model;
       response = await fetch(provider.endpoint, {
@@ -615,18 +758,18 @@ class TarotApp {
 
     } else if (this.aiProvider === 'google') {
       const url = `${provider.endpoint}?key=${this.apiKey}`;
-      
+
       response = await fetch(url, {
         method: 'POST',
         headers: provider.headers(this.apiKey),
         body: JSON.stringify(provider.body(prompt))
       });
-      
+
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.error?.message || 'Google Gemini API Error');
       }
-      
+
       const data = await response.json();
 
       // Gemini responses can vary slightly; join any returned text parts safely.
