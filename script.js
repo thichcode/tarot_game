@@ -44,6 +44,7 @@ class TarotApp {
     this.updateSettingsUI();
     this.renderHistory();
     this.setupOnboarding();
+    this.showScreen(this.currentScreen);
   }
 
   // ========================================
@@ -62,7 +63,21 @@ class TarotApp {
     this.lastScreenIndex = resolvedIndex;
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     target.classList.add('active');
+    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    document.querySelectorAll('.screen-tab').forEach(tab => tab.classList.remove('active'));
+    const targetTab = document.querySelector(`.screen-tab[data-target="${screenId}"]`);
+    if (targetTab) targetTab.classList.add('active');
     this.currentScreen = screenId;
+    this.trackTabSwitch(screenId);
+  }
+
+
+  trackTabSwitch(screenId) {
+    window.dataLayer = window.dataLayer || [];
+    window.analytics = window.analytics || [];
+    window.dataLayer.push({ event: 'tarot_tab_switch', tab: screenId });
+    window.analytics.push({ event: 'tarot_tab_switch', tab: screenId });
+    console.log('[Analytics] Tab switched to', screenId);
   }
 
   // ========================================
@@ -133,6 +148,13 @@ class TarotApp {
     if (historyClearBtn) {
       historyClearBtn.addEventListener('click', () => this.clearHistory());
     }
+    const screenTabs = document.querySelectorAll('.screen-tab');
+    screenTabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        const target = tab.getAttribute('data-target');
+        if (target) this.showScreen(target);
+      });
+    });
   }
 
   // ========================================

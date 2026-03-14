@@ -11,7 +11,6 @@
   <div class="background-pattern"></div>
   
   <div class="container">
-    <!-- Header -->
     <header class="header">
       <h1 class="title">🔮 Tarot</h1>
       <p class="subtitle">Khám phá vận mệnh của bạn</p>
@@ -19,6 +18,12 @@
         <button id="how-to-btn" class="btn btn-link">📘 Cách dùng</button>
       </div>
     </header>
+    <nav class="screen-tabs" aria-label="Tarot sections">
+      <button class="screen-tab active" data-target="welcome-screen">✨ Khởi đầu</button>
+      <button class="screen-tab" data-target="question-screen">🧭 Câu hỏi</button>
+      <button class="screen-tab" data-target="cards-screen">🃏 Chọn bài</button>
+      <button class="screen-tab" data-target="result-screen">🌌 Vũ trụ</button>
+    </nav>
 
     <!-- Welcome Screen -->
     <div id="welcome-screen" class="screen active">
@@ -92,7 +97,7 @@
           <div class="spinner"></div>
           <p>Đang lắng nghe vũ trụ...</p>
         </div>
-        <div id="ai-result" class="ai-result hidden"></div>
+        <div id="ai-result" class="ai-result hidden" role="status" aria-live="polite"></div>
       </div>
 
       <div class="result-actions">
