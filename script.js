@@ -68,16 +68,17 @@ class TarotApp {
     const targetTab = document.querySelector(`.screen-tab[data-target="${screenId}"]`);
     if (targetTab) targetTab.classList.add('active');
     this.currentScreen = screenId;
-    this.trackTabSwitch(screenId);
+    this.trackEvent('tarot_tab_switch', { tab: screenId });
   }
 
 
-  trackTabSwitch(screenId) {
+  trackEvent(eventName, payload = {}) {
+    const entry = { event: eventName, ...payload, timestamp: new Date().toISOString() };
     window.dataLayer = window.dataLayer || [];
     window.analytics = window.analytics || [];
-    window.dataLayer.push({ event: 'tarot_tab_switch', tab: screenId });
-    window.analytics.push({ event: 'tarot_tab_switch', tab: screenId });
-    console.log('[Analytics] Tab switched to', screenId);
+    window.dataLayer.push(entry);
+    window.analytics.push(entry);
+    console.log('[Analytics]', entry);
   }
 
   // ========================================
@@ -86,8 +87,14 @@ class TarotApp {
 
   bindEvents() {
     // Welcome Screen
-    document.getElementById('start-btn').addEventListener('click', () => this.showScreen('question-screen'));
-    document.getElementById('settings-btn').addEventListener('click', () => this.openSettings());
+    document.getElementById('start-btn').addEventListener('click', () => {
+      this.trackEvent('tarot_start_click');
+      this.showScreen('question-screen');
+    });
+    document.getElementById('settings-btn').addEventListener('click', () => {
+      this.trackEvent('tarot_settings_open');
+      this.openSettings();
+    });
 
     // Question Screen
     document.getElementById('shuffle-btn').addEventListener('click', () => this.startCardSelection());
@@ -97,7 +104,10 @@ class TarotApp {
     document.getElementById('reset-btn').addEventListener('click', () => this.resetSelection());
 
     // Result Screen
-    document.getElementById('analyze-btn').addEventListener('click', () => this.analyzeWithAI());
+    document.getElementById('analyze-btn').addEventListener('click', () => {
+      this.trackEvent('tarot_analyze_click', { provider: this.aiProvider });
+      this.analyzeWithAI();
+    });
     document.getElementById('new-reading-btn').addEventListener('click', () => this.newReading());
     document.getElementById('back-to-cards-btn').addEventListener('click', () => this.showScreen('cards-screen'));
 
@@ -127,7 +137,10 @@ class TarotApp {
 
     const howToBtn = document.getElementById('how-to-btn');
     if (howToBtn) {
-      howToBtn.addEventListener('click', () => this.openOnboarding());
+      howToBtn.addEventListener('click', () => {
+        this.trackEvent('tarot_onboarding_open');
+        this.openOnboarding();
+      });
     }
 
     const onboardingModal = document.getElementById('onboarding-modal');
@@ -146,7 +159,10 @@ class TarotApp {
 
     const historyClearBtn = document.getElementById('history-clear-btn');
     if (historyClearBtn) {
-      historyClearBtn.addEventListener('click', () => this.clearHistory());
+      historyClearBtn.addEventListener('click', () => {
+        this.trackEvent('tarot_history_clear');
+        this.clearHistory();
+      });
     }
     const screenTabs = document.querySelectorAll('.screen-tab');
     screenTabs.forEach(tab => {
