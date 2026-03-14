@@ -36,6 +36,8 @@ body {
   font-size: 18px;
   line-height: 1.65;
   letter-spacing: 0.01em;
+  perspective: 1800px;
+  perspective-origin: 50% -5%;
 }
 
 /* Better text rendering */
@@ -121,16 +123,41 @@ body, button, input, select, textarea {
   flex-direction: column;
   align-items: center;
   flex: 1;
-  animation: fadeIn 0.5s ease-out;
+  transform-origin: left center;
+  backface-visibility: hidden;
+  transform-style: preserve-3d;
+  will-change: transform, opacity;
+  --screen-animation: fadeIn;
 }
 
 .screen.active {
   display: flex;
+  animation: var(--screen-animation) 0.7s ease-out;
+}
+
+body[data-page-direction='next'] .screen.active {
+  --screen-animation: pageTurnFromRight;
+}
+
+body[data-page-direction='prev'] .screen.active {
+  --screen-animation: pageTurnFromLeft;
 }
 
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(20px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pageTurnFromRight {
+  0% { transform: rotateY(90deg) translateX(40px); opacity: 0; }
+  60% { opacity: 0.8; }
+  100% { transform: rotateY(0deg) translateX(0); opacity: 1; }
+}
+
+@keyframes pageTurnFromLeft {
+  0% { transform: rotateY(-90deg) translateX(-40px); opacity: 0; }
+  60% { opacity: 0.8; }
+  100% { transform: rotateY(0deg) translateX(0); opacity: 1; }
 }
 
 /* Welcome Screen */
@@ -172,7 +199,33 @@ body, button, input, select, textarea {
   text-transform: uppercase;
   letter-spacing: 0.15em;
   font-weight: 600;
+  min-width: 220px;
 }
+
+@media (max-width: 992px) {
+  .btn {
+    width: 100%;
+    max-width: none;
+    margin: 12px 0;
+  }
+
+  .cards-actions,
+  .result-actions,
+  .ai-controls {
+    flex-direction: column;
+  }
+}
+
+@media (min-width: 1200px) {
+  .cards-actions,
+  .result-actions {
+    justify-content: center;
+  }
+  .ai-controls {
+    gap: 18px;
+  }
+}
+
 
 .btn:focus-visible,
 select:focus-visible,

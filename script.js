@@ -15,6 +15,10 @@ function maskApiKey(key) {
   return key.substring(0, 4) + '****' + key.substring(key.length - 4);
 }
 
+const UNIVERSE_PROMPT = '✨ Vũ trụ nói gì?';
+const UNIVERSE_RETRY = '🔄 Hỏi lại vũ trụ';
+const UNIVERSE_HEADER_PREFIX = '✨ Vũ trụ nói gì qua';
+
 class TarotApp {
   constructor() {
     this.currentScreen = 'welcome';
@@ -27,6 +31,8 @@ class TarotApp {
     this.openRouterFreeModels = null;
     this.history = null;
     this.onboardingTimer = null;
+    this.screenOrder = SCREEN_SEQUENCE;
+    this.lastScreenIndex = this.screenOrder.indexOf('welcome-screen');
 
     this.init();
   }
@@ -45,8 +51,17 @@ class TarotApp {
   // ========================================
 
   showScreen(screenId) {
+    const target = document.getElementById(screenId);
+    if (!target) return;
+    const newIndex = this.screenOrder.indexOf(screenId);
+    const prevIndex = typeof this.lastScreenIndex === 'number' ? this.lastScreenIndex : 0;
+    const resolvedIndex = newIndex === -1 ? prevIndex : newIndex;
+    const direction = resolvedIndex > prevIndex ? 'next' : resolvedIndex < prevIndex ? 'prev' : (document.body.getAttribute('data-page-direction') || 'next');
+    document.body.setAttribute('data-page-direction', direction);
+    document.body.setAttribute('data-current-screen', screenId);
+    this.lastScreenIndex = resolvedIndex;
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-    document.getElementById(screenId).classList.add('active');
+    target.classList.add('active');
     this.currentScreen = screenId;
   }
 
@@ -206,21 +221,8 @@ class TarotApp {
 
     // Update analyze button to show which AI is being used
     if (analyzeBtn) {
-      if (this.aiProvider === 'openai') {
-        analyzeBtn.textContent = '🤖 Phân Tích với OpenAI';
-      } else if (this.aiProvider === 'google') {
-        analyzeBtn.textContent = '🌐 Phân Tích với Gemini Flash';
-      } else if (this.aiProvider === 'openrouter') {
-        analyzeBtn.textContent = '🧩 Phân Tích với OpenRouter';
-      } else if (this.aiProvider === 'googlePro') {
-        analyzeBtn.textContent = '🌟 Phân Tích với Gemini Pro 2.0';
-      } else if (this.aiProvider === 'google15Pro') {
-        analyzeBtn.textContent = '✨ Phân Tích với Gemini 1.5 Pro';
-      } else if (this.aiProvider === 'google25Flash') {
-        analyzeBtn.textContent = '🎯 Phân Tích với Gemini 2.5 Flash';
-      } else {
-        analyzeBtn.textContent = '🤖 Phân Tích AI (Local)';
-      }
+      const providerName = provider ? provider.name : 'Local';
+      analyzeBtn.textContent = this.getUniverseButtonLabel(providerName);
     }
 
     this.updateProviderBadge();
@@ -578,6 +580,21 @@ class TarotApp {
     }
   }
 
+  getUniverseButtonLabel(providerName) {
+    const suffix = providerName ? ` (${providerName})` : '';
+    return `${UNIVERSE_PROMPT}${suffix}`;
+  }
+
+  getUniverseAnalyzingLabel(modeText) {
+    const suffix = modeText ? ` (${modeText})` : '';
+    return `${UNIVERSE_PROMPT}${suffix} đang lắng nghe...`;
+  }
+
+  getUniverseRetryLabel(modeText) {
+    const suffix = modeText ? ` (${modeText})` : '';
+    return `${UNIVERSE_RETRY}${suffix}`;
+  }
+
   // ========================================
   // AI Analysis
   // ========================================
@@ -602,7 +619,7 @@ class TarotApp {
                     this.aiProvider === 'google25Flash' ? '🎯' : '🔮';
 
     analyzeBtn.disabled = true;
-    analyzeBtn.textContent = `${aiEmoji} Đang phân tích với ${aiModeText}...`;
+    analyzeBtn.textContent = this.getUniverseAnalyzingLabel(aiModeText);
     loadingEl.classList.remove('hidden');
     resultEl.classList.add('hidden');
 
@@ -618,7 +635,7 @@ class TarotApp {
       }
 
       // Add header showing which AI was used
-      const headerHtml = `<div class="ai-mode-header">${aiEmoji} Phân tích bằng ${aiModeText}</div>`;
+      const headerHtml = `<div class="ai-mode-header">${UNIVERSE_HEADER_PREFIX} ${aiModeText}</div>`;
       result = headerHtml + result;
 
       // Security: Only allow safe HTML tags from AI
@@ -628,7 +645,7 @@ class TarotApp {
       console.error('AI Analysis Error:', error);
       // Security: Sanitize error message
       const errorHtml = `
-        <div class="ai-mode-header">⚠️ Lỗi kết nối AI</div>
+        <div class="ai-mode-header">⚠️ Lỗi kết nối vũ trụ</div>
         <h3>❌ Lỗi</h3>
         <p>${sanitizeHTML(error.message)}</p>
         <p><strong>Giải pháp:</strong></p>
@@ -642,7 +659,7 @@ class TarotApp {
     }
 
     loadingEl.classList.add('hidden');
-    analyzeBtn.textContent = `🔄 Phân Tích Lại với ${aiModeText}`;
+    analyzeBtn.textContent = this.getUniverseRetryLabel(aiModeText);
     analyzeBtn.disabled = false;
   }
 

@@ -15,10 +15,10 @@
     <header class="header">
       <h1 class="title">🔮 Tarot</h1>
       <p class="subtitle">Khám phá vận mệnh của bạn</p>
+      <div class="header-actions">
+        <button id="how-to-btn" class="btn btn-link">📘 Cách dùng</button>
+      </div>
     </header>
-    <div class="header-actions">
-      <button id="how-to-btn" class="btn btn-link">📘 Cách dùng</button>
-    </div>
 
     <!-- Welcome Screen -->
     <div id="welcome-screen" class="screen active">
@@ -83,14 +83,14 @@
       <div class="ai-section">
         <div class="ai-controls">
           <span id="provider-chip" class="provider-chip">Provider: Local</span>
-          <button id="analyze-btn" class="btn btn-ai">🤖 Phân Tích AI</button>
+          <button id="analyze-btn" class="btn btn-ai">✨ Vũ trụ nói gì?</button>
           <select id="ai-model-select" class="ai-model-select hidden" title="Chọn model (chỉ dùng cho OpenRouter)">
             <option value="">Model: (auto)</option>
           </select>
         </div>
         <div id="ai-loading" class="ai-loading hidden">
           <div class="spinner"></div>
-          <p>Đang phân tích...</p>
+          <p>Đang lắng nghe vũ trụ...</p>
         </div>
         <div id="ai-result" class="ai-result hidden"></div>
       </div>

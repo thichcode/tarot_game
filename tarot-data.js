@@ -472,6 +472,8 @@ const STORAGE_KEYS = {
 
 const ONBOARDING_STORAGE_KEY = 'tarot_onboarding_seen';
 
+const SCREEN_SEQUENCE = ['welcome-screen', 'question-screen', 'cards-screen', 'result-screen'];
+
 const AI_PROVIDERS = {
   local: {
     id: 'local',
